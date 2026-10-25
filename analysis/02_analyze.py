@@ -26,6 +26,7 @@ from abkit import inference as inf, variance_reduction as vr, sequential as seq,
 FEATURES = ["platform", "channel", "goal", "pre_visits"]
 LTV_PER_PAYER = 65.0   # ASSUMPTION: first-year revenue per new payer -- replace with finance's number
 COST_PER_TICKET = 6.0  # ASSUMPTION: fully loaded cost of one support ticket
+ROLLOUT_SHARE = 0.95   # ship to 95% of new users, keep a 5% long-term control holdout
 
 
 def main():
@@ -98,6 +99,12 @@ def main():
     panel["wau_rate"] = panel["active_users"] / panel["users"]
     R["did"] = causal.did(panel)
     es = causal.event_study(panel, rollout_time=12)
+    # Only 12 market clusters: CR1 SEs can be unreliable. Sensitivity checks,
+    # both exact by enumeration, plus a null Monte Carlo of how each method behaves.
+    R["did_wild_bootstrap"] = causal.did_wild_cluster_bootstrap(panel)
+    ri = causal.did_randomization_inference(panel)
+    R["did_randomization"] = {k: v for k, v in ri.items() if k != "placebo_estimates"}
+    R["did_size_sim"] = causal.simulate_did_size(sims=300)
 
     # ---- H. uplift -------------------------------------------------------------
     cate = uplift.t_learner_cate(exp[FEATURES], y, t)
@@ -122,6 +129,9 @@ def main():
 
     # ---- I. business impact -------------------------------------------------
     annual_signups = design["daily_signups"] * 365
+    # Recommended rollout: 95% treatment, 5% long-term control holdout, so only
+    # 95% of signups receive the checklist and generate incremental impact.
+    exposed_signups = annual_signups * ROLLOUT_SHARE
     # Activation -> payer link. The raw gap (paid rate of activated minus
     # non-activated users) is confounded: motivated users both activate and pay.
     # Covariate adjustment removes the observed part; unobserved motivation
@@ -135,11 +145,13 @@ def main():
     grid = {}
     for lk, link in links.items():
         for k, lift in (("low", prim["ci_low"]), ("point", prim["diff"]), ("high", prim["ci_high"])):
-            act = lift * annual_signups
+            act = lift * exposed_signups
             grid[f"{lk}_{k}"] = {"incremental_activated": act, "incremental_payers": act * link,
                                  "revenue": act * link * LTV_PER_PAYER}
-    tickets = R["guardrail_support"]["diff"] * annual_signups
-    R["impact"] = {"annual_signups": annual_signups, "raw_activation_paid_gap": raw_gap,
+    tickets = R["guardrail_support"]["diff"] * exposed_signups
+    R["impact"] = {"annual_signups": annual_signups, "rollout_share": ROLLOUT_SHARE,
+                   "holdout_share": 1 - ROLLOUT_SHARE, "exposed_signups": exposed_signups,
+                   "raw_activation_paid_gap": raw_gap,
                    "adjusted_link_upper": link_hi, "links": links,
                    "ltv_per_payer_assumption": LTV_PER_PAYER, "cost_per_ticket_assumption": COST_PER_TICKET,
                    "scenarios": grid,
@@ -274,6 +286,7 @@ def print_summary(R):
                         f"CI[{iv['ci_low']:.4f},{iv['ci_high']:.4f}] per-protocol={iv['per_protocol_naive']:.4f} as-treated={iv['as_treated_naive']:.4f}")
     c = R["community"]; print(f"Community: naive={c['naive']:.4f} ipw={c['ipw']:.4f}{c['ipw_ci']} aipw={c['aipw']:.4f}{c['aipw_ci']} "
                               f"SMD {c['max_abs_smd_before']:.2f}->{c['max_abs_smd_after']:.2f} E={c['e_value']:.2f}")
+    print('WCB:', R['did_wild_bootstrap']); print('RI:', R['did_randomization']); print('DiD size sim:', R['did_size_sim'])
     d = R["did"]; print(f"DiD: att={d['att']:.4f} CI[{d['ci_low']:.4f},{d['ci_high']:.4f}] naive_post={d['naive_post_comparison']:.4f} before_after={d['naive_before_after']:.4f}")
     print("Uplift qini:", round(R["uplift"]["qini"], 5))
     print(pd.DataFrame(R["uplift"]["quintiles"]).round(4).to_string())

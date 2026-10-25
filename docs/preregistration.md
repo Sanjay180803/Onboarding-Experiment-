@@ -10,7 +10,7 @@ Why: the historical funnel shows the largest leak between **onboarding complete*
 ## Design
 | Item | Decision |
 |---|---|
-| Unit of randomization | User (at signup), 50/50, hash-based |
+| Unit of randomization | Seeded 50/50 Bernoulli assignment at the user level (at signup) |
 | Population | All new signups, all platforms, during the test window |
 | Primary metric | 7-day activation (core action within 7 days of signup) |
 | Secondary metrics | Onboarding completion (7d), D7 retention, D30 retention, paid conversion (30d), revenue per user (30d), sessions per active day |

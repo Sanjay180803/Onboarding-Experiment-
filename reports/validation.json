@@ -133,11 +133,11 @@
     {
       "estimand": "Community effect on D30",
       "method": "AIPW (doubly robust)",
-      "estimate": 0.034916462874642826,
-      "ci_low": 0.022469182533954853,
-      "ci_high": 0.04446421439423481,
+      "estimate": 0.03507162770711925,
+      "ci_low": 0.02281654364898027,
+      "ci_high": 0.04421357703545627,
       "truth": 0.034080632110048074,
-      "error": 0.0008358307645947513,
+      "error": 0.0009909955970711787,
       "ci_covers_truth": true
     },
     {
@@ -162,12 +162,32 @@
     },
     {
       "estimand": "Streak reminders on WAU rate",
-      "method": "Difference-in-differences",
+      "method": "DiD, CR1 clustered SE",
       "estimate": 0.020820241812134335,
       "ci_low": 0.019530516918007078,
       "ci_high": 0.022109966706261593,
       "truth": 0.02,
       "error": 0.0008202418121343348,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "Streak reminders on WAU rate",
+      "method": "DiD, wild cluster bootstrap",
+      "estimate": 0.020820241812134255,
+      "ci_low": 0.019372564819362472,
+      "ci_high": 0.022162633205431728,
+      "truth": 0.02,
+      "error": 0.000820241812134255,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "Streak reminders on WAU rate",
+      "method": "DiD, randomization inference",
+      "estimate": 0.020820241812134255,
+      "ci_low": 0.01976922972152753,
+      "ci_high": 0.02187125390274096,
+      "truth": 0.02,
+      "error": 0.000820241812134255,
       "ci_covers_truth": true
     }
   ],

@@ -51,7 +51,7 @@ Only 59.8% of treatment users opened the checklist. Randomized assignment serves
 | Openers vs. all control | +6.57pp | No, openers are more motivated |
 | Openers vs. non-openers | +7.63pp | No, badly confounded |
 
-The naive comparisons overstate the effect by 60–90%. Practical implication: raising the open rate to 80% would lift ITT to about +3.27pp.
+The naive comparisons overstate the effect by 61% and 87%. Practical implication: raising the open rate to 80% would lift ITT to about +3.27pp.
 
 ## 7. Observational question: does joining the community *cause* retention?
 Community opt-in is self-selected, so joiners and non-joiners differ before they join (max standardized mean difference 0.50).
@@ -59,23 +59,44 @@ Community opt-in is self-selected, so joiners and non-joiners differ before they
 | Method | D30 retention effect [95% CI] |
 |---|---|
 | Naive (joiners − non-joiners) | +6.87pp |
-| Inverse propensity weighting | +3.70pp [+2.52, +4.61] |
-| AIPW (doubly robust, cross-fitted) | **+3.49pp** [+2.25, +4.45] |
+| Inverse propensity weighting (propensity fitted on the full sample) | +3.70pp [+2.52, +4.61] |
+| AIPW (doubly robust; propensity and outcome models both cross-fitted) | **+3.51pp** [+2.28, +4.42] |
+
+Bootstrap CIs (200 resamples) refit every model inside each resample. The IPW propensity model is fitted on the full analyzed sample, which is the standard IPW estimator and is also what the balance check uses. For AIPW, all three nuisance models (one logistic propensity model and two gradient-boosted outcome models) are fitted out-of-fold with 2-fold cross-fitting, so no user's nuisance predictions come from a model trained on that user.
 
 After weighting, the max SMD is 0.01 (good balance). About half of the naive gap was selection. **Sensitivity:** E-value = 1.99. An unmeasured confounder would need a risk ratio of about 2.0 with both joining and retention to explain the effect away. This is not proof, so the recommendation is to validate with a randomized encouragement test.
 
 ![balance](figures/08_ipw_balance.png)
 
 ## 8. Non-randomized rollout: streak reminders (difference-in-differences)
-Ops rolled streak reminders out to the 6 strongest of 12 markets in week 12.
+Ops rolled streak reminders out to the 6 strongest of 12 markets in week 12, so assignment was not random.
 
 | Method | Effect on weekly active rate |
 |---|---|
 | Naive: treated vs. untreated markets, post period | +4.95pp (selection on levels) |
 | Naive: treated markets, before vs. after | +0.94pp (confounded by seasonality) |
-| **DiD (market and week FE, clustered SE)** | **+2.08pp** [+1.95, +2.21] |
+| **DiD (market and week FE, CR1 clustered SE)** | **+2.08pp** [+1.95, +2.21] |
 
 The event-study leads are flat, which supports parallel trends.
+
+**Few-cluster limitation.** There are only 12 market clusters. Cluster-robust (CR1) standard errors are known to be unreliable with this few clusters, especially when few of them are treated or the treated ones are noisier. I report two sensitivity analyses, each computed exactly by full enumeration rather than by random draws:
+
+| Inference method | p-value (H0: no effect) | 95% CI |
+|---|---|---|
+| CR1 cluster-robust SE, normal approximation | < 0.0001 | [+1.95, +2.21] |
+| Wild cluster bootstrap-t, null imposed, all 4,096 Rademacher draws | 0.0005 (smallest attainable: 0.0005) | [+1.94, +2.22] (test inversion) |
+| Randomization inference, all 924 ways to pick 6 treated markets | 0.0022 (smallest attainable: 0.0022) | [+1.98, +2.19] (constant-effect inversion) |
+
+All three agree: the effect is clearly non-zero, and the CIs are nearly identical. Here that is because the effect is large relative to the market-level noise. With 12 clusters the p-values cannot get very small: both methods are already at their minimum attainable value.
+
+**How much should we trust CR1 at 12 clusters in general?** A null Monte Carlo (300 panels per design, true effect = 0, AR(1) noise, treated markets noisier than controls):
+
+| Treated markets (of 12) | CR1 false-positive rate | Wild cluster bootstrap | Randomization inference |
+|---|---|---|---|
+| 6 | 10.7% | 7.3% | 7.3% |
+| 2 | 30.0% | 10.7% | 23.0% |
+
+With a balanced 6-of-12 split, CR1 over-rejects moderately and the wild bootstrap is closer to the nominal 5%. With only 2 treated markets, CR1 rejects a true null far too often. Randomization inference also degrades in that case, because it assumes markets are exchangeable and the treated ones here have different noise. **Take-away:** for designs with few treated clusters, report the wild cluster bootstrap rather than CR1, and don't rely on randomization inference alone. Randomization inference here is a sensitivity check that treats the choice of markets as if random; identification still rests on parallel trends.
 
 ![event study](figures/09_event_study.png)
 
@@ -124,9 +145,11 @@ There is directional evidence that low-intent users benefit more. However, the i
 | CACE activation (compliers) | Naive: openers vs non-openers | +0.0763 | — | +0.0486 | — |
 | Community effect on D30 | Naive joiners vs non | +0.0687 | — | +0.0341 | — |
 | Community effect on D30 | IPW | +0.0370 | [+0.0252, +0.0461] | +0.0341 | yes |
-| Community effect on D30 | AIPW (doubly robust) | +0.0349 | [+0.0225, +0.0445] | +0.0341 | yes |
+| Community effect on D30 | AIPW (doubly robust) | +0.0351 | [+0.0228, +0.0442] | +0.0341 | yes |
 | Streak reminders on WAU rate | Naive post-period comparison | +0.0495 | — | +0.0200 | — |
 | Streak reminders on WAU rate | Naive before/after | +0.0094 | — | +0.0200 | — |
-| Streak reminders on WAU rate | Difference-in-differences | +0.0208 | [+0.0195, +0.0221] | +0.0200 | yes |
+| Streak reminders on WAU rate | DiD, CR1 clustered SE | +0.0208 | [+0.0195, +0.0221] | +0.0200 | yes |
+| Streak reminders on WAU rate | DiD, wild cluster bootstrap | +0.0208 | [+0.0194, +0.0222] | +0.0200 | yes |
+| Streak reminders on WAU rate | DiD, randomization inference | +0.0208 | [+0.0198, +0.0219] | +0.0200 | yes |
 
 Every principled estimator's CI covers the truth. Every naive comparison is off by 35%–148% of the true effect. The one CI that misses is the guardrail false positive, which is the expected ~5% miss rate showing up once.

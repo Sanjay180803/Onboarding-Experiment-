@@ -106,3 +106,42 @@ def test_did_recovers_effect():
 def test_e_value_known_value():
     # VanderWeele & Ding: RR=2 -> E-value 3.41
     assert causal.e_value(2.0) == pytest.approx(3.414, abs=0.01)
+
+
+def _null_panel(rng, G=12, T=16, rollout=9, effect=0.0, ar=0.0):
+    rows = []
+    for m in range(G):
+        a, e = rng.normal(0, 0.03), 0.0
+        for w in range(1, T + 1):
+            e = ar * e + rng.normal(0, 0.006)            # serially correlated noise
+            rows.append(dict(market=m, week=w, treated_market=int(m < G // 2), post=int(w >= rollout),
+                             wau_rate=0.3 + a + 0.01 * np.sin(w) + effect * (m < G // 2) * (w >= rollout) + e))
+    return pd.DataFrame(rows)
+
+
+def test_twfe_fast_path_matches_statsmodels():
+    p = _null_panel(np.random.default_rng(7), effect=0.02)
+    r, w = causal.did(p), causal.did_wild_cluster_bootstrap(p, ci=False)
+    assert w["att"] == pytest.approx(r["att"], abs=1e-12)
+    assert w["cr1_se"] == pytest.approx(r["se"], rel=1e-9)
+
+
+def test_few_cluster_methods_recover_effect():
+    p = _null_panel(np.random.default_rng(8), effect=0.02, ar=0.5)
+    w = causal.did_wild_cluster_bootstrap(p)
+    r = causal.did_randomization_inference(p)
+    assert w["ci_low"] < 0.02 < w["ci_high"]
+    assert r["ci_low"] < 0.02 < r["ci_high"]
+    assert r["n_assignments"] == 924 and r["min_attainable_p"] == pytest.approx(2 / 924)
+
+
+def test_wild_bootstrap_and_ri_hold_size_under_null():
+    rng = np.random.default_rng(9)
+    rej_w = rej_r = 0
+    sims = 150
+    for _ in range(sims):
+        p = _null_panel(rng, ar=0.7)
+        rej_w += causal.did_wild_cluster_bootstrap(p, ci=False)["p_value"] < 0.05
+        rej_r += causal.did_randomization_inference(p, grid_size=3)["p_value"] < 0.05
+    assert rej_w / sims < 0.10
+    assert rej_r / sims < 0.10

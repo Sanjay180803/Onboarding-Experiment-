@@ -29,6 +29,9 @@ def main():
     D, P, S, I = R["design"], R["primary"], R["secondary"], R["impact"]
     iv, cm, did, g = R["iv"], R["community"], R["did"], R["guardrail_support"]
     sc = I["scenarios"]
+    wb, ri, sim = R["did_wild_bootstrap"], R["did_randomization"], R["did_size_sim"]
+    n_tr_did = ri["n_treated"]
+    sim_rows = "\n".join(f"| {r['n_treated']} | {pct(r['cr1'])} | {pct(r['wild_bootstrap'])} | {pct(r['randomization_inference'])} |" for r in sim)
     n_tests = 1 + len(S) + 1
 
     labels = {"onboarded_7d": "Onboarding complete (7d)", "d1_retained": "D1 retention",
@@ -106,7 +109,7 @@ Only {pct(iv['first_stage'])} of treatment users opened the checklist. Randomize
 | Openers vs. all control | {pp(iv['per_protocol_naive'])} | No, openers are more motivated |
 | Openers vs. non-openers | {pp(iv['as_treated_naive'])} | No, badly confounded |
 
-The naive comparisons overstate the effect by 60–90%. Practical implication: raising the open rate to 80% would lift ITT to about {pp(I['itt_if_80pct_open'])}.
+The naive comparisons overstate the effect by {(iv['per_protocol_naive'] / iv['cace'] - 1):.0%} and {(iv['as_treated_naive'] / iv['cace'] - 1):.0%}. Practical implication: raising the open rate to 80% would lift ITT to about {pp(I['itt_if_80pct_open'])}.
 
 ## 7. Observational question: does joining the community *cause* retention?
 Community opt-in is self-selected, so joiners and non-joiners differ before they join (max standardized mean difference {cm['max_abs_smd_before']:.2f}).
@@ -114,23 +117,43 @@ Community opt-in is self-selected, so joiners and non-joiners differ before they
 | Method | D30 retention effect [95% CI] |
 |---|---|
 | Naive (joiners − non-joiners) | {pp(cm['naive'])} |
-| Inverse propensity weighting | {pp(cm['ipw'])} [{cm['ipw_ci'][0]*100:+.2f}, {cm['ipw_ci'][1]*100:+.2f}] |
-| AIPW (doubly robust, cross-fitted) | **{pp(cm['aipw'])}** [{cm['aipw_ci'][0]*100:+.2f}, {cm['aipw_ci'][1]*100:+.2f}] |
+| Inverse propensity weighting (propensity fitted on the full sample) | {pp(cm['ipw'])} [{cm['ipw_ci'][0]*100:+.2f}, {cm['ipw_ci'][1]*100:+.2f}] |
+| AIPW (doubly robust; propensity and outcome models both cross-fitted) | **{pp(cm['aipw'])}** [{cm['aipw_ci'][0]*100:+.2f}, {cm['aipw_ci'][1]*100:+.2f}] |
+
+Bootstrap CIs (200 resamples) refit every model inside each resample. The IPW propensity model is fitted on the full analyzed sample, which is the standard IPW estimator and is also what the balance check uses. For AIPW, all three nuisance models (one logistic propensity model and two gradient-boosted outcome models) are fitted out-of-fold with 2-fold cross-fitting, so no user's nuisance predictions come from a model trained on that user.
 
 After weighting, the max SMD is {cm['max_abs_smd_after']:.2f} (good balance). About half of the naive gap was selection. **Sensitivity:** E-value = {cm['e_value']:.2f}. An unmeasured confounder would need a risk ratio of about {cm['e_value']:.1f} with both joining and retention to explain the effect away. This is not proof, so the recommendation is to validate with a randomized encouragement test.
 
 ![balance](figures/08_ipw_balance.png)
 
 ## 8. Non-randomized rollout: streak reminders (difference-in-differences)
-Ops rolled streak reminders out to the 6 strongest of 12 markets in week 12.
+Ops rolled streak reminders out to the {n_tr_did} strongest of {ri['n_clusters']} markets in week 12, so assignment was not random.
 
 | Method | Effect on weekly active rate |
 |---|---|
 | Naive: treated vs. untreated markets, post period | {pp(did['naive_post_comparison'])} (selection on levels) |
 | Naive: treated markets, before vs. after | {pp(did['naive_before_after'])} (confounded by seasonality) |
-| **DiD (market and week FE, clustered SE)** | **{pp(did['att'])}** {ci_pp(did)} |
+| **DiD (market and week FE, CR1 clustered SE)** | **{pp(did['att'])}** {ci_pp(did)} |
 
 The event-study leads are flat, which supports parallel trends.
+
+**Few-cluster limitation.** There are only {wb['n_clusters']} market clusters. Cluster-robust (CR1) standard errors are known to be unreliable with this few clusters, especially when few of them are treated or the treated ones are noisier. I report two sensitivity analyses, each computed exactly by full enumeration rather than by random draws:
+
+| Inference method | p-value (H0: no effect) | 95% CI |
+|---|---|---|
+| CR1 cluster-robust SE, normal approximation | {'< 0.0001' if did['p_value'] < 1e-4 else f"{did['p_value']:.4f}"} | {ci_pp(did)} |
+| Wild cluster bootstrap-t, null imposed, all {wb['n_draws']:,} Rademacher draws | {wb['p_value']:.4f} (smallest attainable: {wb['min_attainable_p']:.4f}) | [{wb['ci_low']*100:+.2f}, {wb['ci_high']*100:+.2f}] (test inversion) |
+| Randomization inference, all {ri['n_assignments']} ways to pick {n_tr_did} treated markets | {ri['p_value']:.4f} (smallest attainable: {ri['min_attainable_p']:.4f}) | [{ri['ci_low']*100:+.2f}, {ri['ci_high']*100:+.2f}] (constant-effect inversion) |
+
+All three agree: the effect is clearly non-zero, and the CIs are nearly identical. Here that is because the effect is large relative to the market-level noise. With 12 clusters the p-values cannot get very small: both methods are already at their minimum attainable value.
+
+**How much should we trust CR1 at 12 clusters in general?** A null Monte Carlo ({sim[0]['sims']} panels per design, true effect = 0, AR(1) noise, treated markets noisier than controls):
+
+| Treated markets (of 12) | CR1 false-positive rate | Wild cluster bootstrap | Randomization inference |
+|---|---|---|---|
+{sim_rows}
+
+With a balanced 6-of-12 split, CR1 over-rejects moderately and the wild bootstrap is closer to the nominal 5%. With only 2 treated markets, CR1 rejects a true null far too often. Randomization inference also degrades in that case, because it assumes markets are exchangeable and the treated ones here have different noise. **Take-away:** for designs with few treated clusters, report the wild cluster bootstrap rather than CR1, and don't rely on randomization inference alone. Randomization inference here is a sensitivity check that treats the choice of markets as if random; identification still rests on parallel trends.
 
 ![event study](figures/09_event_study.png)
 
@@ -160,10 +183,10 @@ Every principled estimator's CI covers the truth. Every naive comparison is off 
 
     memo = f"""# Decision memo: Guided Onboarding Checklist
 
-**Recommendation: Ship to 100% of new users**, with a 5% long-term holdout and a support-ticket monitor.
+**Recommendation: Ship to {I['rollout_share']:.0%} of new users while retaining a {I['holdout_share']:.0%} long-term control holdout**, plus a support-ticket monitor.
 
 ## What we tested
-A guided onboarding checklist, aimed at the funnel's biggest leak (only {pct(D['biggest_funnel_leak']['step_conversion'], 0)} of users who finish onboarding go on to activate). The test ran for {D['runtime_days']} days with {P['n_c'] + P['n_t']:,} new users randomized 50/50. It was pre-registered and powered for +{D['mde_abs']*100:.0f}pp on 7-day activation.
+A guided onboarding checklist, aimed at the funnel's biggest leak (only {pct(D['biggest_funnel_leak']['step_conversion'], 0)} of users who finish onboarding go on to activate). The test ran for {D['runtime_days']} days with {P['n_c'] + P['n_t']:,} new users, using seeded 50/50 Bernoulli assignment at the user level. It was pre-registered and powered for +{D['mde_abs']*100:.0f}pp on 7-day activation.
 
 ## What we found
 1. **Activation rose {pp(P['diff'], 1)}** (from {pct(P['control'])} to {pct(P['treatment'])}, a {pct(P['rel_lift'], 0)} relative lift). 95% CI {ci_pp(P)}, p = {P['p_value']:.1g}. The result held under variance-reduced analysis and passed the sample-ratio check.
@@ -171,7 +194,7 @@ A guided onboarding checklist, aimed at the funnel's biggest leak (only {pct(D['
 3. **Downstream metrics (retention, paid, revenue) are directionally positive but not significant.** This was expected: the test was not sized to detect them.
 4. **Support tickets ticked up {pp(g['diff'], 1)}** (p = {g['p_value']:.2f}). This is below our +1pp block threshold. If real, it would cost about {money(I['extra_ticket_cost'])} per year, well under the benefit below.
 
-## Expected impact (annualized, ~{I['annual_signups']:,.0f} signups)
+## Expected impact (annualized, {I['rollout_share']:.0%} of ~{I['annual_signups']:,.0f} signups = {I['exposed_signups']:,.0f} exposed users)
 | | CI low | Point | CI high |
 |---|---|---|---|
 | Additional activated users | {sc['optimistic_low']['incremental_activated']:,.0f} | {sc['optimistic_point']['incremental_activated']:,.0f} | {sc['optimistic_high']['incremental_activated']:,.0f} |
@@ -181,7 +204,7 @@ A guided onboarding checklist, aimed at the funnel's biggest leak (only {pct(D['
 *Assumptions:* first-year value of {money(I['ltv_per_payer_assumption'])} per payer, and {money(I['cost_per_ticket_assumption'])} per support ticket. The activation-to-payer link comes from historical data, adjusted for user mix ({I['adjusted_link_upper']:.3f} payers per activated user), and is treated as an upper bound because motivated users both activate and pay. The pessimistic case uses half of it. The raw, unadjusted gap ({I['raw_activation_paid_gap']:.3f}) would overstate impact.
 
 ## Next steps
-1. **Ship to all platforms**, keeping a **5% holdout for 90 days** to measure paid conversion and revenue directly. That is the only way to replace the assumption above with a measured number.
+1. **Ship to {I['rollout_share']:.0%} of new users on all platforms and keep a {I['holdout_share']:.0%} control holdout for at least 90 days**, to measure paid conversion and revenue directly. That is the only way to replace the assumption above with a measured number. Impact figures above already exclude the holdout.
 2. **Run a follow-up test on checklist discoverability.** Raising opens from {pct(iv['first_stage'], 0)} to 80% is worth about {pp(I['itt_if_80pct_open'] - iv['itt'], 1)} more activation.
 3. **Tag and monitor support tickets** from checklist users for 4 weeks. Revisit if the rate rises by 1pp or more.
 4. **Do not exclude web users yet.** The negative web estimate is one of {len(seg)} unplanned segment cuts with a wide CI. Low-intent users may benefit most; test a tailored checklist for them.

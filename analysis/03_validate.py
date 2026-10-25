@@ -40,7 +40,9 @@ def main():
         row("Community effect on D30", "AIPW (doubly robust)", R["community"]["aipw"], *R["community"]["aipw_ci"], T["community"]["ate_d30_retention"]),
         row("Streak reminders on WAU rate", "Naive post-period comparison", R["did"]["naive_post_comparison"], None, None, T["did"]["att_weekly_active_rate"]),
         row("Streak reminders on WAU rate", "Naive before/after", R["did"]["naive_before_after"], None, None, T["did"]["att_weekly_active_rate"]),
-        row("Streak reminders on WAU rate", "Difference-in-differences", R["did"]["att"], R["did"]["ci_low"], R["did"]["ci_high"], T["did"]["att_weekly_active_rate"]),
+        row("Streak reminders on WAU rate", "DiD, CR1 clustered SE", R["did"]["att"], R["did"]["ci_low"], R["did"]["ci_high"], T["did"]["att_weekly_active_rate"]),
+        row("Streak reminders on WAU rate", "DiD, wild cluster bootstrap", R["did_wild_bootstrap"]["att"], R["did_wild_bootstrap"]["ci_low"], R["did_wild_bootstrap"]["ci_high"], T["did"]["att_weekly_active_rate"]),
+        row("Streak reminders on WAU rate", "DiD, randomization inference", R["did_randomization"]["att"], R["did_randomization"]["ci_low"], R["did_randomization"]["ci_high"], T["did"]["att_weekly_active_rate"]),
     ]
     df = pd.DataFrame(rows)
     pc = pd.read_parquet(REPORTS / "pred_cate.parquet").merge(pd.read_parquet(DATA / "_truth" / "user_truth.parquet"), on="user_id")

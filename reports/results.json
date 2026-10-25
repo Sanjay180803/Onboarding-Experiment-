@@ -283,18 +283,18 @@
   "community": {
     "naive": 0.06869266022841679,
     "ipw": 0.03702038694086239,
-    "aipw": 0.034916462874642826,
+    "aipw": 0.03507162770711925,
     "ipw_ci": [
       0.025244301118926275,
       0.04611531864634895
     ],
     "aipw_ci": [
-      0.022469182533954853,
-      0.04446421439423481
+      0.02281654364898027,
+      0.04421357703545627
     ],
     "baseline_nonjoiners": 0.10675731544857366,
-    "risk_ratio": 1.3270638899819707,
-    "e_value": 1.9858769728151133,
+    "risk_ratio": 1.328517325110275,
+    "e_value": 1.9891541073195957,
     "max_abs_smd_before": 0.4960473205501047,
     "max_abs_smd_after": 0.011746368142874055
   },
@@ -307,6 +307,44 @@
     "naive_post_comparison": 0.049509193102726834,
     "naive_before_after": 0.009399004484481888
   },
+  "did_wild_bootstrap": {
+    "att": 0.020820241812134255,
+    "cr1_se": 0.0006580349967144469,
+    "n_clusters": 12,
+    "n_draws": 4096,
+    "p_value": 0.00048828125,
+    "min_attainable_p": 0.00048828125,
+    "ci_low": 0.019372564819362472,
+    "ci_high": 0.022162633205431728
+  },
+  "did_randomization": {
+    "att": 0.020820241812134255,
+    "n_assignments": 924,
+    "n_treated": 6,
+    "n_clusters": 12,
+    "p_value": 0.0021645021645021645,
+    "min_attainable_p": 0.0021645021645021645,
+    "ci_low": 0.01976922972152753,
+    "ci_high": 0.02187125390274096
+  },
+  "did_size_sim": [
+    {
+      "n_treated": 6,
+      "n_clusters": 12,
+      "sims": 300,
+      "cr1": 0.10666666666666667,
+      "wild_bootstrap": 0.07333333333333333,
+      "randomization_inference": 0.07333333333333333
+    },
+    {
+      "n_treated": 2,
+      "n_clusters": 12,
+      "sims": 300,
+      "cr1": 0.3,
+      "wild_bootstrap": 0.10666666666666667,
+      "randomization_inference": 0.23
+    }
+  ],
   "uplift": {
     "qini": 0.0020405061401790364,
     "quintiles": [
@@ -444,6 +482,9 @@
   ],
   "impact": {
     "annual_signups": 364165.71428571426,
+    "rollout_share": 0.95,
+    "holdout_share": 0.050000000000000044,
+    "exposed_signups": 345957.4285714285,
     "raw_activation_paid_gap": 0.18895853971581716,
     "adjusted_link_upper": 0.17646544102943285,
     "links": {
@@ -454,38 +495,38 @@
     "cost_per_ticket_assumption": 6.0,
     "scenarios": {
       "optimistic_low": {
-        "incremental_activated": 3911.83315320781,
-        "incremental_payers": 690.3033626143731,
-        "revenue": 44869.71856993425
+        "incremental_activated": 3716.2414955474196,
+        "incremental_payers": 655.7881944836545,
+        "revenue": 42626.23264143754
       },
       "optimistic_point": {
-        "incremental_activated": 8907.619967175422,
-        "incremental_payers": 1571.887086030193,
-        "revenue": 102172.66059196254
+        "incremental_activated": 8462.23896881665,
+        "incremental_payers": 1493.292731728683,
+        "revenue": 97064.0275623644
       },
       "optimistic_high": {
-        "incremental_activated": 13903.406781143032,
-        "incremental_payers": 2453.4708094460125,
-        "revenue": 159475.6026139908
+        "incremental_activated": 13208.23644208588,
+        "incremental_payers": 2330.7972689737117,
+        "revenue": 151501.82248329127
       },
       "pessimistic_low": {
-        "incremental_activated": 3911.83315320781,
-        "incremental_payers": 345.15168130718655,
-        "revenue": 22434.859284967126
+        "incremental_activated": 3716.2414955474196,
+        "incremental_payers": 327.89409724182724,
+        "revenue": 21313.11632071877
       },
       "pessimistic_point": {
-        "incremental_activated": 8907.619967175422,
-        "incremental_payers": 785.9435430150965,
-        "revenue": 51086.33029598127
+        "incremental_activated": 8462.23896881665,
+        "incremental_payers": 746.6463658643415,
+        "revenue": 48532.0137811822
       },
       "pessimistic_high": {
-        "incremental_activated": 13903.406781143032,
-        "incremental_payers": 1226.7354047230062,
-        "revenue": 79737.8013069954
+        "incremental_activated": 13208.23644208588,
+        "incremental_payers": 1165.3986344868558,
+        "revenue": 75750.91124164563
       }
     },
-    "extra_tickets_per_year": 2212.0337139487415,
-    "extra_ticket_cost": 13272.202283692448,
+    "extra_tickets_per_year": 2101.432028251304,
+    "extra_ticket_cost": 12608.592169507825,
     "direct_paid_itt": 0.0064440890505452625,
     "direct_paid_ci": [
       -0.0024342062535560784,

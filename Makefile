@@ -1,5 +1,10 @@
 PY ?= python3
 
+# single-threaded BLAS/OpenMP: results do not depend on machine core count
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
 .PHONY: all data design analyze validate report test clean
 
 all: test data design analyze validate report
