@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   reproduce:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest is migrating to a new image
     timeout-minutes: 30
     env:
       # pin BLAS/OpenMP threads so numerical results don't depend on runner core count
@@ -19,9 +19,9 @@ jobs:
       OPENBLAS_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
           cache: pip
@@ -71,7 +71,7 @@ jobs:
 
       - name: Upload regenerated report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: regenerated-report
           path: |

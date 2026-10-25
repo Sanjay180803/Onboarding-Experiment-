@@ -25,7 +25,7 @@ report:
 	$(PY) analysis/04_report.py
 
 test:
-	$(PY) -m pytest -q tests
+	$(PY) -m pytest -q
 
 clean:
 	rm -rf data/*.parquet data/_truth reports/*.json reports/*.csv reports/*.parquet reports/figures/*.png
