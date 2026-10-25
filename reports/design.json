@@ -1,0 +1,27 @@
+{
+  "baseline_activation_7d": 0.210803264604811,
+  "baseline_d7": 0.2521119702176403,
+  "baseline_d30": 0.12192153493699885,
+  "baseline_paid_30d": 0.07620990836197022,
+  "baseline_revenue_30d": 2.5249037084765176,
+  "daily_signups": 997.7142857142857,
+  "alpha": 0.05,
+  "power": 0.8,
+  "mde_abs": 0.02,
+  "mde_rel": 0.09487519103413143,
+  "n_per_arm": 6751,
+  "n_total": 13502,
+  "simulated_power": 0.806,
+  "runtime_days": 14,
+  "rho_cuped_pre_visits": 0.18466065854290967,
+  "n_per_arm_cuped": 6521,
+  "rho_cupac": 0.2167729554311527,
+  "n_per_arm_cupac": 6434,
+  "mde_at_planned_n_d30": 0.01621701198264085,
+  "mde_at_planned_n_paid": 0.013291588811465036,
+  "biggest_funnel_leak": {
+    "from_step": "onboarding_complete",
+    "step": "activated",
+    "step_conversion": 0.31055212782787533
+  }
+}

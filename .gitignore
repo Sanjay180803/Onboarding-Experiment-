@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+data/*.parquet
+data/_truth/
+reports/pred_cate.parquet
+.venv/

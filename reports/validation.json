@@ -1,0 +1,176 @@
+{
+  "table": [
+    {
+      "estimand": "ITT activation 7d",
+      "method": "Two-proportion z-test",
+      "estimate": 0.024460347632250606,
+      "ci_low": 0.010741904028171897,
+      "ci_high": 0.038178791236329314,
+      "truth": 0.02904416986223548,
+      "error": -0.004583822229984873,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT activation 7d",
+      "method": "CUPAC-adjusted",
+      "estimate": 0.02455646604631509,
+      "ci_low": 0.011120670479543853,
+      "ci_high": 0.037992261613086324,
+      "truth": 0.02904416986223548,
+      "error": -0.004487703815920389,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT onboarding completion",
+      "method": "z-test",
+      "estimate": 0.02350425354859076,
+      "ci_low": 0.00820892546134466,
+      "ci_high": 0.038799581635836855,
+      "truth": 0.024712398806987643,
+      "error": -0.0012081452583968845,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT D7 retention",
+      "method": "z-test",
+      "estimate": 0.007100983920235865,
+      "ci_low": -0.007206837242503086,
+      "ci_high": 0.021408805082974817,
+      "truth": 0.008379491549495811,
+      "error": -0.0012785076292599461,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT D30 retention",
+      "method": "z-test",
+      "estimate": 0.0009937133470625248,
+      "ci_low": -0.009946115069363203,
+      "ci_high": 0.011933541763488252,
+      "truth": 0.003550632012498225,
+      "error": -0.0025569186654357,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT paid 30d",
+      "method": "z-test",
+      "estimate": 0.0064440890505452625,
+      "ci_low": -0.0024342062535560784,
+      "ci_high": 0.015322384354646603,
+      "truth": 0.0039056952137480473,
+      "error": 0.002538393836797215,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT revenue / user 30d",
+      "method": "Bootstrap",
+      "estimate": -0.07973935800962018,
+      "ci_low": -0.4783422253286965,
+      "ci_high": 0.3151120498686196,
+      "truth": 0.12210268427780144,
+      "error": -0.2018420422874216,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "ITT support tickets",
+      "method": "z-test (guardrail)",
+      "estimate": 0.006074250340363567,
+      "ci_low": 0.0005414375270618513,
+      "ci_high": 0.011607063153665283,
+      "truth": 0.0,
+      "error": 0.006074250340363567,
+      "ci_covers_truth": false
+    },
+    {
+      "estimand": "CACE activation (compliers)",
+      "method": "IV / Wald",
+      "estimate": 0.040902717557371356,
+      "ci_low": 0.018014836873005265,
+      "ci_high": 0.06379059824173744,
+      "truth": 0.04860946042310435,
+      "error": -0.007706742865732995,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "CACE activation (compliers)",
+      "method": "Naive: openers vs control",
+      "estimate": 0.0657318724354174,
+      "ci_low": NaN,
+      "ci_high": NaN,
+      "truth": 0.04860946042310435,
+      "error": 0.017122412012313043,
+      "ci_covers_truth": null
+    },
+    {
+      "estimand": "CACE activation (compliers)",
+      "method": "Naive: openers vs non-openers",
+      "estimate": 0.07633124719488724,
+      "ci_low": NaN,
+      "ci_high": NaN,
+      "truth": 0.04860946042310435,
+      "error": 0.027721786771782886,
+      "ci_covers_truth": null
+    },
+    {
+      "estimand": "Community effect on D30",
+      "method": "Naive joiners vs non",
+      "estimate": 0.06869266022841679,
+      "ci_low": NaN,
+      "ci_high": NaN,
+      "truth": 0.034080632110048074,
+      "error": 0.034612028118368714,
+      "ci_covers_truth": null
+    },
+    {
+      "estimand": "Community effect on D30",
+      "method": "IPW",
+      "estimate": 0.03702038694086239,
+      "ci_low": 0.025244301118926275,
+      "ci_high": 0.04611531864634895,
+      "truth": 0.034080632110048074,
+      "error": 0.002939754830814316,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "Community effect on D30",
+      "method": "AIPW (doubly robust)",
+      "estimate": 0.034916462874642826,
+      "ci_low": 0.022469182533954853,
+      "ci_high": 0.04446421439423481,
+      "truth": 0.034080632110048074,
+      "error": 0.0008358307645947513,
+      "ci_covers_truth": true
+    },
+    {
+      "estimand": "Streak reminders on WAU rate",
+      "method": "Naive post-period comparison",
+      "estimate": 0.049509193102726834,
+      "ci_low": NaN,
+      "ci_high": NaN,
+      "truth": 0.02,
+      "error": 0.029509193102726834,
+      "ci_covers_truth": null
+    },
+    {
+      "estimand": "Streak reminders on WAU rate",
+      "method": "Naive before/after",
+      "estimate": 0.009399004484481888,
+      "ci_low": NaN,
+      "ci_high": NaN,
+      "truth": 0.02,
+      "error": -0.010600995515518113,
+      "ci_covers_truth": null
+    },
+    {
+      "estimand": "Streak reminders on WAU rate",
+      "method": "Difference-in-differences",
+      "estimate": 0.020820241812134335,
+      "ci_low": 0.019530516918007078,
+      "ci_high": 0.022109966706261593,
+      "truth": 0.02,
+      "error": 0.0008202418121343348,
+      "ci_covers_truth": true
+    }
+  ],
+  "uplift_rank_corr_with_true_cate": 0.11384612736590902,
+  "true_complier_share": 0.5975003550632012
+}
