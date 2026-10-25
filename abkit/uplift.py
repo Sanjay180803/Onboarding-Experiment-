@@ -45,7 +45,7 @@ def uplift_by_quantile(cate, y, t, q: int = 5) -> pd.DataFrame:
 
 def qini_coefficient(cate, y, t) -> float:
     """Area between the Qini curve and random targeting (normalized by n)."""
-    order = np.argsort(-np.asarray(cate))
+    order = np.argsort(-np.asarray(cate), kind="stable")   # stable: tie order must not depend on CPU sort kernels
     y, t = np.asarray(y, float)[order], np.asarray(t, bool)[order]
     ct, cc = np.cumsum(t), np.cumsum(~t)
     yt, yc = np.cumsum(y * t), np.cumsum(y * ~t)

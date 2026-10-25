@@ -109,7 +109,7 @@ def main():
 def write_prereg(d):
     text = f"""# Pre-registration: Guided Onboarding Checklist
 
-*Written from the pre-experiment cohort only ({ROOT.name}/analysis/01_design.py), before any experiment data was analyzed.*
+*Written from the pre-experiment cohort only (analysis/01_design.py), before any experiment data was analyzed.*
 
 ## Hypothesis
 Users offered a guided onboarding checklist will complete their first core action (activation) within 7 days at a higher rate than users on the current onboarding flow.
