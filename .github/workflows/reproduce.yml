@@ -46,7 +46,9 @@ jobs:
         run: |
           set -e
           for f in docs/preregistration.md docs/decision_memo.md reports/report.md \
-                   reports/design.json reports/results.json reports/validation.json; do
+                   reports/design.json reports/results.json reports/validation.json \
+                   reports/experiment_funnel.csv reports/experiment_retention.csv \
+                   reports/event_study.csv reports/uplift_quintiles.csv reports/ipw_balance.csv; do
             test -s "$f" || { echo "missing or empty: $f"; exit 1; }
           done
           test "$(ls reports/figures/*.png | wc -l)" -eq 10
@@ -61,6 +63,9 @@ jobs:
           print(f"{len(principled) - len(missed)}/{len(principled)} principled CIs cover the true effect")
           assert not missed, f"CIs missing ground truth: {missed}"
           PY
+
+      - name: Dashboard and metric catalog against the regenerated outputs
+        run: pytest -q tests/test_dashboard.py tests/test_metric_catalog.py
 
       - name: Compare regenerated numbers with committed versions
         run: |

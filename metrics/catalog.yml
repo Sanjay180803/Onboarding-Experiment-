@@ -1,0 +1,203 @@
+# Metric catalog: single source of truth for every metric used in the
+# onboarding experiment. The dashboard renders this file, and
+# tests/test_metric_catalog.py checks that every metric maps to a real column
+# in sql/01_user_metrics.sql output and a real entry in reports/results.json.
+#
+# Changing a definition = bump `version`, add a changelog line, and get sign-off
+# from the listed stakeholders (see docs/metric_review.md).
+
+catalog_version: 1.1
+experiment: guided_onboarding_checklist
+analysis_unit: user            # randomization unit = analysis unit (except ratio metrics)
+exposure_anchor: signup_ts     # all windows are measured from each user's signup time
+
+metrics:
+  - id: activation_7d
+    name: 7-day activation
+    tier: primary
+    version: 1
+    definition: Share of new users who complete their first core action (log a habit) within 7 days of signup.
+    numerator: users with a core_action event where 0 <= event_ts - signup_ts < 7 days
+    denominator: all users assigned to the variant (intent-to-treat)
+    unit: proportion
+    window_days: 7
+    desired_direction: increase
+    sql_column: activated_7d
+    results_key: primary
+    analysis: two-proportion z-test; CUPED/CUPAC-adjusted estimate reported alongside
+    owner: Growth PM (onboarding)
+    stakeholders: [Growth PM, Onboarding design lead, Data science]
+    decision_use: Ship/no-ship. Pre-registered MDE +2pp absolute.
+    why_this_metric: Leading indicator that moves within the test window and is the step the checklist targets (onboarding complete -> activated is the funnel's biggest leak). Paid conversion is the business goal but is too sparse to power in 2 weeks.
+    caveats: Counts the first core action only; does not measure depth of engagement.
+
+  - id: onboarded_7d
+    name: Onboarding completion
+    tier: secondary
+    version: 1
+    definition: Share of new users who finish the onboarding flow within 7 days of signup.
+    numerator: users with an onboarding_complete event within 7 days
+    denominator: all assigned users
+    unit: proportion
+    window_days: 7
+    desired_direction: increase
+    sql_column: onboarded_7d
+    results_key: secondary.onboarded_7d
+    analysis: two-proportion z-test, Holm-corrected
+    owner: Onboarding design lead
+    stakeholders: [Onboarding design lead, Data science]
+    decision_use: Mechanism check. If activation moves but this does not, the effect is not coming from the onboarding flow.
+    caveats: Mechanically related to the treatment, so not a success metric on its own.
+
+  - id: d1_retained
+    name: D1 retention
+    tier: secondary
+    version: 1
+    definition: Share of new users with at least one session on day 1 after signup (24-48 hours).
+    numerator: users with a session_start where floor((event_ts - signup_ts) / 1 day) = 1
+    denominator: all assigned users
+    unit: proportion
+    window_days: 1
+    desired_direction: increase
+    sql_column: d1_retained
+    results_key: secondary.d1_retained
+    analysis: two-proportion z-test, Holm-corrected
+    owner: Growth PM (retention)
+    stakeholders: [Growth PM, Data science]
+    decision_use: Directional only (not powered).
+    caveats: Exact-day (classic) retention, not rolling; a user active on day 2 but not day 1 counts as not retained.
+
+  - id: d7_retained
+    name: D7 retention
+    tier: secondary
+    version: 1
+    definition: Share of new users with at least one session exactly 7 days after signup.
+    numerator: users with a session_start on day 7 after signup
+    denominator: all assigned users
+    unit: proportion
+    window_days: 7
+    desired_direction: increase
+    sql_column: d7_retained
+    results_key: secondary.d7_retained
+    analysis: two-proportion z-test, Holm-corrected
+    owner: Growth PM (retention)
+    stakeholders: [Growth PM, Data science]
+    decision_use: Directional only (not powered).
+    caveats: Exact-day retention.
+
+  - id: d30_retained
+    name: D30 retention
+    tier: secondary
+    version: 1
+    definition: Share of new users with at least one session exactly 30 days after signup.
+    numerator: users with a session_start on day 30 after signup
+    denominator: all assigned users
+    unit: proportion
+    window_days: 30
+    desired_direction: increase
+    sql_column: d30_retained
+    results_key: secondary.d30_retained
+    analysis: two-proportion z-test, Holm-corrected
+    owner: Head of Growth
+    stakeholders: [Head of Growth, Finance, Data science]
+    decision_use: Long-term health. Measured properly through the 5% holdout after launch.
+    caveats: MDE at the planned sample size is about 1.6pp; the test cannot detect realistic effects on this metric.
+
+  - id: paid_30d
+    name: Paid conversion (30 days)
+    tier: secondary
+    version: 1
+    definition: Share of new users who make a first purchase within 30 days of signup.
+    numerator: users with a purchase event within 30 days
+    denominator: all assigned users
+    unit: proportion
+    window_days: 30
+    desired_direction: increase
+    sql_column: paid_30d
+    results_key: secondary.paid_30d
+    analysis: two-proportion z-test, Holm-corrected
+    owner: Monetization PM
+    stakeholders: [Monetization PM, Finance, Data science]
+    decision_use: Business outcome. Not powered in the test; measured through the holdout.
+    caveats: Trials convert to paid after 7 days, so the 30-day window captures most but not all conversions.
+
+  - id: revenue_30d
+    name: Revenue per user (30 days)
+    tier: secondary
+    version: 1
+    definition: Mean first-purchase revenue per assigned user within 30 days of signup (non-payers count as 0).
+    numerator: sum of purchase revenue within 30 days
+    denominator: all assigned users
+    unit: usd_per_user
+    window_days: 30
+    desired_direction: increase
+    sql_column: revenue_30d
+    results_key: secondary.revenue_30d
+    analysis: percentile bootstrap CI (heavy-tailed, annual vs monthly plans), Holm-corrected
+    owner: Finance
+    stakeholders: [Finance, Monetization PM, Data science]
+    decision_use: Directional only (not powered).
+    caveats: First purchase only; excludes renewals and refunds.
+
+  - id: sessions_per_active_day
+    name: Sessions per active day
+    tier: secondary
+    version: 1
+    definition: Total sessions in days 1-30 divided by total active days in days 1-30, pooled across users in a variant.
+    numerator: sum over users of sessions_30d
+    denominator: sum over users of active_days_30d
+    unit: ratio
+    window_days: 30
+    desired_direction: increase
+    sql_column: [sessions_30d, active_days_30d]
+    results_key: secondary.sessions_per_active_day
+    analysis: delta method (analysis unit is the day, randomization unit is the user)
+    owner: Product analytics
+    stakeholders: [Product analytics, Data science]
+    decision_use: Engagement depth among active users.
+    caveats: A ratio of sums, not a mean of per-user ratios. Conditioned on being active, so it can move because of who is active rather than how they behave.
+
+  - id: support_ticket_7d
+    name: Support tickets (7 days)
+    tier: guardrail
+    version: 2
+    definition: Share of new users who open at least one support ticket within 7 days of signup.
+    numerator: users with a support_ticket event within 7 days
+    denominator: all assigned users
+    unit: proportion
+    window_days: 7
+    desired_direction: decrease
+    sql_column: support_ticket_7d
+    results_key: guardrail_support
+    analysis: two-proportion z-test
+    block_threshold: Blocks launch if worse by more than +1pp absolute, or if the cost of the harm exceeds the value of the primary effect's CI lower bound.
+    owner: Support operations lead
+    stakeholders: [Support operations lead, Growth PM, Data science]
+    decision_use: Guardrail. A significant move below the block threshold triggers investigation and monitoring, not a block.
+    caveats: Ticket volume, not severity.
+
+  - id: sample_ratio
+    name: Sample ratio
+    tier: validity
+    version: 1
+    definition: Observed control vs treatment counts compared with the designed 50/50 split.
+    numerator: users assigned to treatment
+    denominator: all assigned users
+    unit: count
+    window_days: 0
+    desired_direction: match_design
+    sql_column: treat
+    results_key: srm
+    analysis: chi-square goodness of fit; p < 0.001 invalidates the test
+    owner: Data science
+    stakeholders: [Data science, Experimentation platform]
+    decision_use: Trust check. An SRM means assignment or logging is broken and no other metric can be trusted.
+    caveats: Detects imbalance, not its cause.
+
+changelog:
+  - version: 1.0
+    date: 2026-07-20
+    change: Initial catalog agreed at design review (before launch).
+  - version: 1.1
+    date: 2026-07-27
+    change: support_ticket_7d v2 - guardrail rule changed from "any significant increase blocks" to a +1pp threshold plus cost-benefit check, agreed with Support ops before launch to avoid blocking on noise across ~10 tests.

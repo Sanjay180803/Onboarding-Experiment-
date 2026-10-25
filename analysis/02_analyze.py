@@ -171,6 +171,12 @@ def main():
 def figures(con, exp, R, es, comm, deciles):
     # Experiment funnel
     f = run_sql(con, "02_funnel.sql", group_col="variant", where="cohort = 'experiment'")
+    # tables behind the figures, for the interactive dashboard
+    f.to_csv(REPORTS / "experiment_funnel.csv", index=False)
+    es.to_csv(REPORTS / "event_study.csv", index=False)
+    deciles.to_csv(REPORTS / "uplift_quintiles.csv", index=False)
+    pd.DataFrame({"covariate": comm["balance_before"].index, "smd_before": comm["balance_before"].values,
+                  "smd_after": comm["balance_after"].values}).to_csv(REPORTS / "ipw_balance.csv", index=False)
     fig, ax = plt.subplots(figsize=(8, 3.6))
     steps = f[f.grp == "control"].sort_values("step_order")["step"].tolist()
     x = np.arange(len(steps)); w = 0.38
@@ -189,6 +195,7 @@ def figures(con, exp, R, es, comm, deciles):
 
     # Retention curves
     rc = run_sql(con, "03_retention_curve.sql", group_col="variant", where="cohort = 'experiment'")
+    rc.to_csv(REPORTS / "experiment_retention.csv", index=False)
     fig, ax = plt.subplots(figsize=(7, 3.4))
     for v in ["control", "treatment"]:
         d = rc[rc.grp == v]

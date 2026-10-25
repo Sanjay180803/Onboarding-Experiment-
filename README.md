@@ -30,6 +30,29 @@ The data is **synthetic with known ground truth**, so every estimator is checked
 | Causal inference | `abkit/causal.py`: IV/CACE; IPW (full-sample propensity) and AIPW with cross-fitted propensity and outcome models, balance diagnostics and an E-value; DiD and event study, plus exact wild cluster bootstrap and randomization inference for the 12-cluster case |
 | Heterogeneous effects | `abkit/uplift.py`: cross-fitted T-learner, uplift by quintile, Qini |
 | Business recommendation | `docs/decision_memo.md`: annualized impact range, guardrail cost-benefit, next tests |
+| Dashboards & stakeholder communication | `dashboard/` (Streamlit): decision summary, metric results, funnel and retention, segments, causal deep-dives, plus live power and business-impact calculators |
+| Metric definition with stakeholders | `metrics/catalog.yml`: one versioned definition per metric (numerator, denominator, window, good direction, owner, decision use), with the review process in `docs/metric_review.md`; CI checks it against the SQL and results |
+
+## Dashboard
+
+```bash
+make all         # generate outputs (once)
+make dashboard   # http://localhost:8501
+```
+
+| Decision summary | Power calculator | Causal deep-dives |
+|---|---|---|
+| ![summary](docs/images/dashboard_summary.png) | ![power](docs/images/dashboard_power.png) | ![causal](docs/images/dashboard_causal.png) |
+
+Nine pages, all driven by `reports/` and `metrics/catalog.yml`:
+- **Decision summary**: recommendation, primary KPI, SRM and guardrail checks, all metrics with verdicts that respect each metric's good direction (tickets going up count as *worse*).
+- **Metric results**: interactive forest plot with tier filter and per-metric definitions.
+- **Funnel & retention**, **Segments & uplift** (with a multiple-comparisons warning), **Causal deep-dives** (IV, IPW/AIPW with balance, DiD with few-cluster checks, peeking), **Validation vs truth**.
+- **Power calculator**: plan the next test (baseline, MDE, alpha, power, traffic, CUPED correlation). Uses `abkit.power`, and a test pins its defaults to the preregistered 6,751 users per arm.
+- **Business impact**: change LTV, the causal share of the activation-to-payer link, rollout share and ticket cost; the activation CI carries through to revenue. A test pins its defaults to the memo's numbers.
+- **Metric definitions**: the catalog, rendered, with its changelog.
+
+The dashboard is tested headlessly in CI with Streamlit's `AppTest`: every page must render without exceptions, and both calculators must reproduce the report at default inputs. To host it publicly, deploy `dashboard/app.py` from this repo on [Streamlit Community Cloud](https://streamlit.io/cloud) (free, sign in with GitHub).
 
 ## Repo layout
 
@@ -41,7 +64,10 @@ analysis/01_design.py    Design from PRE-experiment data only -> docs/preregistr
 analysis/02_analyze.py   Full analysis -> reports/results.json + figures
 analysis/03_validate.py  Compare every estimate with ground truth
 analysis/04_report.py    Generate reports/report.md and docs/decision_memo.md
-tests/                   15 statistical correctness tests (CI coverage, false-positive control, recovery of known effects)
+dashboard/               Streamlit dashboard (app.py) and its tested data layer (data.py)
+metrics/catalog.yml      Metric definitions: the single source of truth
+tests/                   15 statistical correctness tests (CI coverage, false-positive control, recovery of known effects),
+                         plus metric-catalog consistency and headless dashboard tests
 .github/workflows/       GitHub Actions: locked install, tests, full pipeline from scratch, output checks
 ```
 
@@ -55,7 +81,7 @@ make all        # tests -> simulate -> design -> analyze -> validate -> report  
 
 Every number in the report and memo is generated from code. Change the seed (`python sim/simulate.py --seed 11`) and the whole story regenerates.
 
-**Reproducibility.** `requirements.txt` pins the direct dependencies and `requirements.lock` pins every transitive package, because statistical output can shift across SciPy, statsmodels and scikit-learn versions. BLAS/OpenMP run single-threaded (set in the `Makefile` and the workflow), so results don't depend on core count. On every push, a GitHub Actions workflow installs the lock file, runs the 15 tests, deletes all generated outputs, reruns the full pipeline, checks that every report, figure and JSON file was regenerated and that every principled CI still covers the ground truth, and diffs the regenerated report against the committed one.
+**Reproducibility.** `requirements.txt` pins the direct dependencies and `requirements.lock` pins every transitive package, because statistical output can shift across SciPy, statsmodels and scikit-learn versions. BLAS/OpenMP run single-threaded (set in the `Makefile` and the workflow), so results don't depend on core count. On every push, a GitHub Actions workflow installs the lock file, runs the tests (statistics, metric catalog, dashboard), deletes all generated outputs, reruns the full pipeline, checks that every report, figure and JSON file was regenerated and that every principled CI still covers the ground truth, and diffs the regenerated report against the committed one.
 
 ## Things worth discussing in an interview
 
@@ -71,4 +97,3 @@ Every number in the report and memo is generated from code. Change the seed (`py
 - Apply the same `abkit` analysis to a public dataset (e.g. the Kaggle *Cookie Cats* mobile-game retention A/B test).
 - Add Bayesian analysis (beta-binomial posterior, expected loss) alongside the frequentist results.
 - Replace the DiD with Callaway–Sant'Anna for a staggered rollout.
-- Add a Streamlit dashboard over `reports/results.json`.
